@@ -2084,3 +2084,96 @@ function showToast(message, type = 'success') {
         }
     }, 5000);
 }
+
+// Streak animation and celebration
+function celebrateStreak(streakCount) {
+    if (streakCount % 7 === 0 && streakCount > 0) {
+        // Create celebration effect
+        createStreakCelebration(streakCount);
+        
+        // Show celebration message
+        showToast(`🔥 Amazing! ${streakCount}-day streak! +5 bonus points!`, 'success');
+    }
+}
+
+function createStreakCelebration(streakCount) {
+    const streakCard = document.querySelector('.app-card.text-center .streak-number');
+    if (!streakCard) return;
+    
+    // Add celebration class
+    streakCard.classList.add('streak-milestone');
+    
+    // Create fire particles
+    for (let i = 0; i < 10; i++) {
+        createFireParticle(streakCard);
+    }
+    
+    // Remove celebration class after animation
+    setTimeout(() => {
+        streakCard.classList.remove('streak-milestone');
+    }, 3000);
+}
+
+function createFireParticle(parentElement) {
+    const particle = document.createElement('div');
+    particle.innerHTML = '🔥';
+    particle.className = 'streak-particle';
+    particle.style.cssText = `
+        position: absolute;
+        font-size: 1.5rem;
+        pointer-events: none;
+        z-index: 100;
+    `;
+    
+    document.body.appendChild(particle);
+    
+    const rect = parentElement.getBoundingClientRect();
+    const startX = rect.left + rect.width / 2;
+    const startY = rect.top + rect.height / 2;
+    
+    // Animate particle
+    animateParticle(particle, startX, startY);
+}
+
+function animateParticle(particle, startX, startY) {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 50 + Math.random() * 100;
+    const duration = 1000 + Math.random() * 1000;
+    
+    const endX = startX + Math.cos(angle) * distance;
+    const endY = startY + Math.sin(angle) * distance;
+    
+    particle.style.left = startX + 'px';
+    particle.style.top = startY + 'px';
+    
+    // Animate
+    particle.animate([
+        { 
+            transform: 'translate(0, 0) scale(1)',
+            opacity: 1
+        },
+        { 
+            transform: `translate(${endX - startX}px, ${endY - startY}px) scale(0.5)`,
+            opacity: 0
+        }
+    ], {
+        duration: duration,
+        easing: 'ease-out'
+    });
+    
+    // Remove after animation
+    setTimeout(() => {
+        particle.remove();
+    }, duration);
+}
+
+// Call this when page loads with current streak
+document.addEventListener('DOMContentLoaded', function() {
+    const streakElement = document.querySelector('.streak-number');
+    if (streakElement) {
+        const streakCount = parseInt(streakElement.textContent);
+        if (streakCount > 0) {
+            celebrateStreak(streakCount);
+        }
+    }
+});

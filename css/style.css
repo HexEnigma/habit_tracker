@@ -495,3 +495,61 @@ body {
     100% { opacity: 1; }
 }
 
+/* Streak animation styles */
+.streak-fire {
+    animation: flame 2s ease-in-out infinite;
+}
+
+@keyframes flame {
+    0%, 100% { 
+        opacity: 1; 
+        transform: scale(1); 
+    }
+    50% { 
+        opacity: 0.8; 
+        transform: scale(1.1); 
+    }
+}
+
+.streak-milestone {
+    position: relative;
+    animation: pulse 2s infinite;
+}
+
+.streak-milestone::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 8px;
+    height: 8px;
+    background: #f59e0b;
+    border-radius: 50%;
+    animation: glow 1.5s infinite;
+}
+
+@keyframes glow {
+    0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); 
+    }
+    50% { 
+        box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); 
+    }
+}
+
+/* Streak progress bar */
+.streak-progress {
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.streak-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f59e0b, #ef4444);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+

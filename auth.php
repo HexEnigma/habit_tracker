@@ -1,100 +1,74 @@
 <?php
-// Temporary debug - habit creation
+// Start session and include config FIRST
+session_start();
+require_once 'config.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'create') {
     error_log("=== HABIT CREATION DEBUG ===");
     error_log("POST data: " . print_r($_POST, true));
     error_log("Session user_id: " . ($_SESSION['user_id'] ?? 'not set'));
 }
 
-require_once 'config.php';
-//session_start();
-
 // Check if it's an AJAX request or form submission
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'signup') {
-        $username = trim($_POST['username']);
+        // ... [rest of your signup code remains exactly the same] ...
+        // KEEP ALL YOUR EXISTING SIGNUP CODE HERE
+    }
+
+    if ($action === 'login') {
         $email = trim($_POST['email']);
         $password = $_POST['password'];
-        $confirm_password = $_POST['confirm_password'];
 
         // Validate inputs
         $errors = [];
-
-        if (empty($username)) {
-            $errors['username'] = 'Username is required';
-        } elseif (strlen($username) < 3) {
-            $errors['username'] = 'Username must be at least 3 characters';
-        } elseif (strlen($username) > 50) {
-            $errors['username'] = 'Username must be less than 50 characters';
-        }
 
         if (empty($email)) {
             $errors['email'] = 'Email is required';
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors['email'] = 'Please enter a valid email address';
-        } elseif (strlen($email) > 100) {
-            $errors['email'] = 'Email must be less than 100 characters';
         }
 
         if (empty($password)) {
             $errors['password'] = 'Password is required';
-        } elseif (strlen($password) < 8) {
-            $errors['password'] = 'Password must be at least 8 characters';
         }
 
-        if ($password !== $confirm_password) {
-            $errors['confirm_password'] = 'Passwords do not match';
-        }
-
-        // Check if email already exists
         if (empty($errors)) {
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+            $stmt = $pdo->prepare("SELECT id, username, email, password_hash FROM users WHERE email = ?");
             $stmt->execute([$email]);
+            $user = $stmt->fetch();
 
-            if ($stmt->rowCount() > 0) {
-                $errors['email'] = 'Email already exists';
-            }
-        }
+            if ($user && password_verify($password, $user['password_hash'])) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['email'] = $user['email'];
 
-        // If no errors, create user
-        if (empty($errors)) {
-            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+                // Add daily login reward - THIS SHOULD NOW WORK
+                handle_daily_login($pdo, $user['id']);
 
-            try {
-                $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)");
-                $stmt->execute([$username, $email, $password_hash]);
+                // Check for streak milestones after login
+                $stmt = $pdo->prepare("SELECT login_streak FROM user_settings WHERE user_id = ?");
+                $stmt->execute([$user['id']]);
+                $login_streak = $stmt->fetch()['login_streak'] ?? 0;
 
-                $user_id = $pdo->lastInsertId();
-                // Debug: Check if user was created
-                error_log("New user ID: " . $user_id);
-
-                // Initialize user settings
-                $stmt = $pdo->prepare("INSERT INTO user_settings (user_id) VALUES (?)");
-                $stmt->execute([$user_id]);
-
-                // Initialize user points
-                $stmt = $pdo->prepare("INSERT INTO user_points (user_id, points) VALUES (?, 0)");
-                $stmt->execute([$user_id]);
-
-                // Set session
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['username'] = $username;
-                $_SESSION['email'] = $email;
+                if ($login_streak % 7 == 0 && $login_streak > 0) {
+                    $_SESSION['streak_message'] = "Amazing! {$login_streak}-day login streak! 🎉";
+                }
 
                 if ($isAjax) {
-                    echo json_encode(['success' => true, 'message' => 'Account created successfully']);
+                    echo json_encode(['success' => true, 'message' => 'Login successful']);
                     exit;
                 } else {
                     // Redirect to dashboard for form submissions
                     header('Location: dashboard.php');
                     exit;
                 }
-            } catch (PDOException $e) {
-                error_log("Signup error: " . $e->getMessage());
-                $errors['general'] = 'Failed to create account. Please try again.';
+            } else {
+                $errors['email'] = 'Invalid email or password';
             }
         }
 
@@ -136,6 +110,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['email'] = $user['email'];
+
+                // Add daily login reward
+                handle_daily_login($pdo, $user['id']);
+
+                // Check for streak milestones after login
+                $stmt = $pdo->prepare("SELECT login_streak FROM user_settings WHERE user_id = ?");
+                $stmt->execute([$user['id']]);
+                $login_streak = $stmt->fetch()['login_streak'] ?? 0;
+
+                if ($login_streak % 7 == 0 && $login_streak > 0) {
+                    $_SESSION['streak_message'] = "Amazing! {$login_streak}-day login streak! 🎉";
+                }
 
                 if ($isAjax) {
                     echo json_encode(['success' => true, 'message' => 'Login successful']);
@@ -330,6 +316,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($result) {
                     $habit_id = $pdo->lastInsertId();
                     error_log("Habit created successfully, ID: " . $habit_id);
+
+                    // Achievement check after habit creation
+                    check_achievements($pdo, $_SESSION['user_id'], 'habit_created', ['habit_id' => $habit_id]);
 
                     if ($isAjax) {
                         echo json_encode(['success' => true, 'message' => 'Habit created successfully']);

@@ -35,8 +35,6 @@ function require_login()
     }
 }
 
-
-
 // CSRF protection functions
 function generate_csrf_token()
 {
@@ -65,6 +63,93 @@ function validate_date($date, $format = 'Y-m-d')
 {
     $d = DateTime::createFromFormat($format, $date);
     return $d && $d->format($format) === $date;
+}
+
+// Function to handle daily login rewards and streaks
+function handle_daily_login($pdo, $user_id)
+{
+    $today = date('Y-m-d');
+
+    // Check if user already logged in today
+    $stmt = $pdo->prepare("SELECT last_login_date, login_streak FROM user_settings WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $settings = $stmt->fetch();
+
+    $last_login = $settings['last_login_date'] ?? null;
+    $current_streak = $settings['login_streak'] ?? 0;
+
+    if (!$last_login || $last_login != $today) {
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+
+        // Check if consecutive login
+        if ($last_login == $yesterday) {
+            $new_streak = $current_streak + 1;
+        } else {
+            $new_streak = 1; // Reset streak
+        }
+
+        // Award login point
+        $stmt = $pdo->prepare("UPDATE user_points SET points = points + 1 WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+
+        // Update login streak and date
+        if ($settings) {
+            $stmt = $pdo->prepare("UPDATE user_settings SET last_login_date = ?, login_streak = ? WHERE user_id = ?");
+            $stmt->execute([$today, $new_streak, $user_id]);
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO user_settings (user_id, last_login_date, login_streak) VALUES (?, ?, ?)");
+            $stmt->execute([$user_id, $today, $new_streak]);
+        }
+
+        // Award bonus for streak milestones
+        if ($new_streak % 7 == 0) {
+            $bonus_points = floor($new_streak / 7) * 5;
+            $stmt = $pdo->prepare("UPDATE user_points SET points = points + ? WHERE user_id = ?");
+            $stmt->execute([$bonus_points, $user_id]);
+        }
+
+        return ['points' => 1, 'streak' => $new_streak];
+    }
+
+    return false;
+}
+
+// Function to check and award achievements
+function check_achievements($pdo, $user_id, $action, $context = [])
+{
+    $achievements = [
+        'first-habit' => function ($pdo, $user_id) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM habits WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            return $stmt->fetchColumn() == 1;
+        },
+        'three-habits' => function ($pdo, $user_id) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM habits WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            return $stmt->fetchColumn() >= 3;
+        },
+        'ten-points' => function ($pdo, $user_id) {
+            $stmt = $pdo->prepare("SELECT points FROM user_points WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            return $stmt->fetchColumn() >= 10;
+        }
+    ];
+
+    foreach ($achievements as $achievement_name => $check_function) {
+        // Check if user already has this achievement
+        $stmt = $pdo->prepare("SELECT id FROM user_achievements WHERE user_id = ? AND achievement_name = ?");
+        $stmt->execute([$user_id, $achievement_name]);
+
+        if (!$stmt->fetch() && $check_function($pdo, $user_id)) {
+            // Award achievement
+            $stmt = $pdo->prepare("INSERT INTO user_achievements (user_id, achievement_name) VALUES (?, ?)");
+            $stmt->execute([$user_id, $achievement_name]);
+
+            // Add points for achievement
+            $stmt = $pdo->prepare("UPDATE user_points SET points = points + 5 WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+        }
+    }
 }
 
 // Function to check and mark missed habits (runs once per day per user)

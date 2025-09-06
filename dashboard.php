@@ -46,29 +46,37 @@ $stmt = $pdo->prepare("SELECT points FROM user_points WHERE user_id = ?");
 $stmt->execute([$user_id]);
 $points = $stmt->fetch()['points'];
 
-// Get user streaks
-$stmt = $pdo->prepare("
-    SELECT h.name, us.current_streak, us.longest_streak 
-    FROM user_streaks us
-    JOIN habits h ON us.habit_id = h.id
-    WHERE us.user_id = ? AND us.current_streak > 0
-    ORDER BY us.current_streak DESC
-");
+// Get login streak
+$stmt = $pdo->prepare("SELECT login_streak FROM user_settings WHERE user_id = ?");
 $stmt->execute([$user_id]);
-$streaks = $stmt->fetchAll();
+$login_streak = $stmt->fetch()['login_streak'] ?? 0;
 
 // Get user achievements
 $stmt = $pdo->prepare("
-    SELECT achievement_name 
+    SELECT achievement_name, unlocked_at
     FROM user_achievements 
     WHERE user_id = ? 
     ORDER BY unlocked_at DESC
+    LIMIT 4
 ");
 $stmt->execute([$user_id]);
 $achievements = $stmt->fetchAll();
 
 require_once 'header.php';
 ?>
+
+<?php if (isset($_SESSION['streak_message'])): ?>
+    <div class="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-lg mb-6 animate-pulse">
+        <div class="flex items-center">
+            <i class="fas fa-fire text-2xl mr-3"></i>
+            <div>
+                <h3 class="font-bold text-lg">Streak Milestone!</h3>
+                <p><?php echo $_SESSION['streak_message'];
+                    unset($_SESSION['streak_message']); ?></p>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 
 <!-- Dashboard View -->
 <div id="dashboard-view" class="flex">
@@ -115,7 +123,6 @@ require_once 'header.php';
                 <i class="fas fa-user w-5"></i>
                 <span>Profile</span>
             </a>
-            <!-- UPDATE SETTINGS BUTTON LINK -->
             <a href="settings.php" class="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-50">
                 <i class="fas fa-cog w-5"></i>
                 <span>Settings</span>
@@ -173,7 +180,6 @@ require_once 'header.php';
                         <span class="font-semibold"><?php echo $points; ?></span>
                         <span class="text-sm text-gray-600">points</span>
                     </div>
-                    <!-- ADD LOGOUT BUTTON HERE -->
                     <a href="logout.php" class="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition flex items-center">
                         <i class="fas fa-sign-out-alt mr-2"></i> Logout
                     </a>
@@ -182,6 +188,25 @@ require_once 'header.php';
 
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Login Streak Card -->
+                <div class="app-card p-6 text-center">
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-fire text-purple-500 text-xl"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-800 mb-2">
+                        <?php echo $login_streak; ?>
+                    </div>
+                    <div class="text-gray-600">Login Streak</div>
+                    <!-- Streak type indicator -->
+                    <div class="text-xs text-gray-500 mt-1">
+                        <?php if ($login_streak > 0): ?>
+                            <i class="fas fa-calendar-check mr-1"></i> Consecutive days
+                        <?php else: ?>
+                            <i class="fas fa-calendar mr-1"></i> Start your streak!
+                        <?php endif; ?>
+                    </div>
+                </div>
+
                 <div class="app-card p-6 text-center">
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <i class="fas fa-list-check text-blue-500 text-xl"></i>
@@ -196,16 +221,6 @@ require_once 'header.php';
                     </div>
                     <div class="text-2xl font-bold text-gray-800 mb-2"><?php echo $completion_rate; ?>%</div>
                     <div class="text-gray-600">Completion Rate</div>
-                </div>
-
-                <div class="app-card p-6 text-center">
-                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-fire text-purple-500 text-xl"></i>
-                    </div>
-                    <div class="text-2xl font-bold text-gray-800 mb-2">
-                        <?php echo !empty($streaks) ? $streaks[0]['current_streak'] : '0'; ?>
-                    </div>
-                    <div class="text-gray-600">Current Streak</div>
                 </div>
             </div>
 
@@ -287,98 +302,56 @@ require_once 'header.php';
                             <i class="fas fa-trophy text-3xl text-gray-300 mb-3"></i>
                             <p class="text-lg font-medium mb-2">No achievements yet</p>
                             <p class="text-sm">Complete habits to unlock achievements!</p>
-                            <div class="mt-4 grid grid-cols-4 gap-2 opacity-60">
-                                <div class="text-center">
-                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-1">
-                                        <i class="fas fa-seedling text-green-500"></i>
-                                    </div>
-                                    <p class="text-xs">First Habit</p>
-                                </div>
-                                <div class="text-center">
-                                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1">
-                                        <i class="fas fa-fire text-purple-500"></i>
-                                    </div>
-                                    <p class="text-xs">7-Day Streak</p>
-                                </div>
-                                <div class="text-center">
-                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1">
-                                        <i class="fas fa-list-check text-blue-500"></i>
-                                    </div>
-                                    <p class="text-xs">3 Habits</p>
-                                </div>
-                                <div class="text-center">
-                                    <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-1">
-                                        <i class="fas fa-star text-amber-500"></i>
-                                    </div>
-                                    <p class="text-xs">10 Points</p>
-                                </div>
-                            </div>
                         </div>
                     <?php else: ?>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <?php
-                            $achievement_count = 0;
-                            foreach ($achievements as $achievement):
-                                if ($achievement_count >= 4) break; // Limit to 4 achievements
+                            <?php foreach ($achievements as $achievement):
                                 $icon_class = '';
                                 $color_class = 'bg-blue-100 text-blue-600';
                                 $title = '';
 
                                 switch ($achievement['achievement_name']) {
-                                    case 'first_habit':
+                                    case 'first-habit':
                                     case 'first-habit':
                                         $icon_class = 'fa-seedling';
                                         $color_class = 'bg-green-100 text-green-600';
                                         $title = 'First Habit Created';
                                         break;
-                                    case 'three_day_streak':
+                                    case 'three-day-streak':
                                     case 'three-day-streak':
                                         $icon_class = 'fa-calendar-check';
                                         $color_class = 'bg-purple-100 text-purple-600';
                                         $title = '3-Day Streak';
                                         break;
-                                    case 'seven_day_streak':
+                                    case 'seven-day-streak':
                                     case 'seven-day-streak':
                                         $icon_class = 'fa-fire';
                                         $color_class = 'bg-orange-100 text-orange-600';
                                         $title = '7-Day Streak';
                                         break;
-                                    case 'thirty_day_streak':
+                                    case 'thirty-day-streak':
                                     case 'thirty-day-streak':
                                         $icon_class = 'fa-award';
                                         $color_class = 'bg-yellow-100 text-yellow-600';
                                         $title = '30-Day Streak';
                                         break;
-                                    case 'three_habits':
+                                    case 'three-habits':
                                     case 'three-habits':
                                         $icon_class = 'fa-list-check';
                                         $color_class = 'bg-indigo-100 text-indigo-600';
                                         $title = '3 Active Habits';
                                         break;
-                                    case 'ten_points':
+                                    case 'ten-points':
                                     case 'ten-points':
                                         $icon_class = 'fa-star';
                                         $color_class = 'bg-amber-100 text-amber-600';
                                         $title = '10 Points Earned';
-                                        break;
-                                    case 'five_habits':
-                                    case 'five-habits':
-                                        $icon_class = 'fa-list-ol';
-                                        $color_class = 'bg-teal-100 text-teal-600';
-                                        $title = '5 Active Habits';
-                                        break;
-                                    case 'fifty_points':
-                                    case 'fifty-points':
-                                        $icon_class = 'fa-trophy';
-                                        $color_class = 'bg-rose-100 text-rose-600';
-                                        $title = '50 Points Earned';
                                         break;
                                     default:
                                         $icon_class = 'fa-trophy';
                                         $title = ucfirst(str_replace(['_', '-'], ' ', $achievement['achievement_name']));
                                 }
 
-                                // Format the date if available
                                 $unlocked_date = '';
                                 if (!empty($achievement['unlocked_at'])) {
                                     $unlocked_date = date('M j, Y', strtotime($achievement['unlocked_at']));
@@ -397,12 +370,10 @@ require_once 'header.php';
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                            <?php
-                                $achievement_count++;
-                            endforeach; ?>
+                            <?php endforeach; ?>
                         </div>
 
-                        <?php if (count($achievements) > 4): ?>
+                        <?php if (count($achievements) >= 4): ?>
                             <div class="mt-4 text-center">
                                 <p class="text-sm text-gray-500">
                                     +<?php echo (count($achievements) - 4); ?> more achievements
@@ -450,7 +421,7 @@ require_once 'header.php';
                     <?php else: ?>
                         <div class="space-y-3">
                             <?php foreach ($user_groups as $group):
-                                // Get unread message count (simplified - would need message tracking in real implementation)
+                                // Get unread message count
                                 $stmt = $pdo->prepare("
                                     SELECT COUNT(*) as unread_count 
                                     FROM group_messages 

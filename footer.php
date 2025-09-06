@@ -31,9 +31,15 @@
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Links</h3>
                 <ul class="space-y-2">
                     <li><a href="home.php" class="text-gray-600 hover:text-blue-500 transition">Home</a></li>
-                    <li><a href="dashboard.php" class="text-gray-600 hover:text-blue-500 transition">Dashboard</a></li>
-                    <li><a href="habits.php" class="text-gray-600 hover:text-blue-500 transition">My Habits</a></li>
-                    <li><a href="analytics.php" class="text-gray-600 hover:text-blue-500 transition">Analytics</a></li>
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <li><a href="dashboard.php" class="text-gray-600 hover:text-blue-500 transition">Dashboard</a></li>
+                        <li><a href="habits.php" class="text-gray-600 hover:text-blue-500 transition">My Habits</a></li>
+                        <li><a href="analytics.php" class="text-gray-600 hover:text-blue-500 transition">Analytics</a></li>
+                    <?php else: ?>
+                        <li><a href="javascript:void(0)" onclick="showLoginToast()" class="text-gray-600 hover:text-blue-500 transition">Dashboard</a></li>
+                        <li><a href="javascript:void(0)" onclick="showLoginToast()" class="text-gray-600 hover:text-blue-500 transition">My Habits</a></li>
+                        <li><a href="javascript:void(0)" onclick="showLoginToast()" class="text-gray-600 hover:text-blue-500 transition">Analytics</a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
 
@@ -60,12 +66,29 @@
         </div>
 
         <div class="border-t mt-8 pt-6 text-center">
-            <p class="text-gray-600">&copy; 2024 HabitTracker. All rights reserved.</p>
+            <p class="text-gray-600">&copy; 2025 HabitTracker. All rights reserved.</p>
         </div>
     </div>
 </footer>
 
 <script src="js/script.js"></script>
+
+<script>
+    function showLoginToast() {
+        // Show toast notification
+        if (typeof showToast !== 'undefined') {
+            showToast('Please login first to access this feature', 'info');
+        } else {
+            // Fallback if showToast is not available
+            alert('Please login first to access this feature');
+        }
+
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+            window.location.href = 'login.php';
+        }, 2000);
+    }
+</script>
 </body>
 
 </html>

@@ -16,8 +16,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'signup') {
-        // ... [rest of your signup code remains exactly the same] ...
-        // KEEP ALL YOUR EXISTING SIGNUP CODE HERE
+        $username = trim($_POST['username']);
+        $email = trim($_POST['email']);
+        $password = $_POST['password'];
+        $confirm_password = $_POST['confirm_password'];
+
+        // Validate inputs
+        $errors = [];
+
+        if (empty($username)) {
+            $errors['username'] = 'Username is required';
+        } elseif (strlen($username) < 3) {
+            $errors['username'] = 'Username must be at least 3 characters';
+        }
+
+        if (empty($email)) {
+            $errors['email'] = 'Email is required';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Please enter a valid email address';
+        }
+
+        if (empty($password)) {
+            $errors['password'] = 'Password is required';
+        } elseif (strlen($password) < 8) {
+            $errors['password'] = 'Password must be at least 8 characters';
+        }
+
+        if ($password !== $confirm_password) {
+            $errors['confirm_password'] = 'Passwords do not match';
+        }
+
+        if (empty($errors)) {
+            // Check if email already exists
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+
+            if ($stmt->rowCount() > 0) {
+                $errors['email'] = 'Email already exists';
+            } else {
+                // Check if username already exists
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+                $stmt->execute([$username]);
+
+                if ($stmt->rowCount() > 0) {
+                    $errors['username'] = 'Username already exists';
+                } else {
+                    try {
+                        // Hash password
+                        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
+                        // Start transaction
+                        $pdo->beginTransaction();
+
+                        // Insert user
+                        $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)");
+                        $stmt->execute([$username, $email, $password_hash]);
+                        $user_id = $pdo->lastInsertId();
+
+                        // Initialize user points
+                        $stmt = $pdo->prepare("INSERT INTO user_points (user_id, points) VALUES (?, 0)");
+                        $stmt->execute([$user_id]);
+
+                        // Commit transaction
+                        $pdo->commit();
+
+                        // Set session variables
+                        $_SESSION['user_id'] = $user_id;
+                        $_SESSION['username'] = $username;
+                        $_SESSION['email'] = $email;
+
+                        // Add daily login reward
+                        handle_daily_login($pdo, $user_id);
+
+                        if ($isAjax) {
+                            echo json_encode(['success' => true, 'message' => 'Registration successful']);
+                            exit;
+                        } else {
+                            header('Location: dashboard.php');
+                            exit;
+                        }
+                    } catch (PDOException $e) {
+                        $pdo->rollBack();
+                        error_log("Registration error: " . $e->getMessage());
+                        $errors['general'] = 'Registration failed. Please try again.';
+                    }
+                }
+            }
+        }
+
+        if ($isAjax) {
+            echo json_encode(['success' => false, 'errors' => $errors]);
+            exit;
+        } else {
+            $_SESSION['form_errors'] = $errors;
+            $_SESSION['form_data'] = $_POST;
+            header('Location: login.php');
+            exit;
+        }
     }
 
     if ($action === 'login') {

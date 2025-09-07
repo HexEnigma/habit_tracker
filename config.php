@@ -132,6 +132,65 @@ function check_achievements($pdo, $user_id, $action, $context = [])
             $stmt = $pdo->prepare("SELECT points FROM user_points WHERE user_id = ?");
             $stmt->execute([$user_id]);
             return $stmt->fetchColumn() >= 10;
+        },
+        'group-explorer' => function ($pdo, $user_id) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM group_members WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            return $stmt->fetchColumn() >= 1;
+        },
+        'social-butterfly' => function ($pdo, $user_id) {
+            $stmt = $pdo->prepare("SELECT COUNT(DISTINCT group_id) FROM group_members WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            return $stmt->fetchColumn() >= 3;
+        },
+        'habit-mentor' => function ($pdo, $user_id) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM habits WHERE user_id = ? AND is_visible_to_group = 1");
+            $stmt->execute([$user_id]);
+            return $stmt->fetchColumn() >= 5;
+        },
+        'three-day-streak' => function ($pdo, $user_id) {
+            $stmt = $pdo->prepare("SELECT current_streak FROM user_streaks WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            $streaks = $stmt->fetchAll();
+            foreach ($streaks as $streak) {
+                if ($streak['current_streak'] >= 3) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        'seven-day-streak' => function ($pdo, $user_id) {
+            $stmt = $pdo->prepare("SELECT current_streak FROM user_streaks WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            $streaks = $stmt->fetchAll();
+            foreach ($streaks as $streak) {
+                if ($streak['current_streak'] >= 7) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        'fourteen-day-streak' => function ($pdo, $user_id) {
+            $stmt = $pdo->prepare("SELECT current_streak FROM user_streaks WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            $streaks = $stmt->fetchAll();
+            foreach ($streaks as $streak) {
+                if ($streak['current_streak'] >= 14) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        'thirty-day-streak' => function ($pdo, $user_id) {
+            $stmt = $pdo->prepare("SELECT current_streak FROM user_streaks WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            $streaks = $stmt->fetchAll();
+            foreach ($streaks as $streak) {
+                if ($streak['current_streak'] >= 30) {
+                    return true;
+                }
+            }
+            return false;
         }
     ];
 

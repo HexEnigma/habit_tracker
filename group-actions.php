@@ -28,6 +28,7 @@ try {
             if ($group && $group['is_public']) {
                 $stmt = $pdo->prepare("INSERT INTO group_members (group_id, user_id) VALUES (?, ?)");
                 $stmt->execute([$group_id, $user_id]);
+                check_achievements($pdo, $user_id, 'group_join');
                 $_SESSION['success'] = 'Successfully joined the group!';
             } else {
                 $_SESSION['error'] = 'Cannot join this group';

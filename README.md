@@ -6,7 +6,7 @@ A comprehensive, feature-rich habit tracking web application designed to help us
 
 ## 🚀 Live Demo
 
-_[Live Demo Link](#) ← Live URL coming soon...
+[Live Demo Link](#) ← Live URL coming soon...
 
 ## 📸 Screenshots
 
@@ -36,7 +36,7 @@ _[Live Demo Link](#) ← Live URL coming soon...
 - **Visual Analytics** - Interactive charts and graphs using Chart.js
 - **Monthly Reports** - Comprehensive progress overviews
 - **Category Tracking** - Organize habits by health, productivity, learning, fitness, and more
-- **Export Capabilities** - Download your habit data
+- **Export Capabilities** - Download your habit data [comimg soon...]
 
 ### 🎮 Gamification System
 
@@ -105,7 +105,7 @@ _[Live Demo Link](#) ← Live URL coming soon...
 1. **Clone or Download the Repository**
 
    ```bash
-   git clone https://github.com/your-username/habittracker.git
+   git clone https://github.com/HexEnigma/habit_tracker.git
    ```
 
    Or download the ZIP file and extract to your `htdocs` folder
@@ -114,7 +114,7 @@ _[Live Demo Link](#) ← Live URL coming soon...
 
    - Open PHPMyAdmin (usually at http://localhost/phpmyadmin)
    - Create a new database named `habit_tracker`
-   - Import the SQL file from the project's `database/` folder
+   - Import the SQL file from the project's `habit_tracker.sql/` file
    - Or run the SQL schema provided in the installation docs
 
 3. **Configure Environment**
@@ -249,9 +249,9 @@ HabitTracker was developed as a comprehensive course project for my university s
 
 For questions, support, or feedback about HabitTracker:
 
-- **Email**: [Your Email]
+- **Email**: hamimshahriar17@gmail.com
 - **GitHub Issues**: [Create an issue](../../issues)
-- **University**: [Your University Name]
+- **University**: Northern University Bangladesh
 
 ---
 

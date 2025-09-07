@@ -84,70 +84,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if ($action === 'login') {
-        $email = trim($_POST['email']);
-        $password = $_POST['password'];
-
-        // Validate inputs
-        $errors = [];
-
-        if (empty($email)) {
-            $errors['email'] = 'Email is required';
-        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Please enter a valid email address';
-        }
-
-        if (empty($password)) {
-            $errors['password'] = 'Password is required';
-        }
-
-        if (empty($errors)) {
-            $stmt = $pdo->prepare("SELECT id, username, email, password_hash FROM users WHERE email = ?");
-            $stmt->execute([$email]);
-            $user = $stmt->fetch();
-
-            if ($user && password_verify($password, $user['password_hash'])) {
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['email'] = $user['email'];
-
-                // Add daily login reward
-                handle_daily_login($pdo, $user['id']);
-
-                // Check for streak milestones after login
-                $stmt = $pdo->prepare("SELECT login_streak FROM user_settings WHERE user_id = ?");
-                $stmt->execute([$user['id']]);
-                $login_streak = $stmt->fetch()['login_streak'] ?? 0;
-
-                if ($login_streak % 7 == 0 && $login_streak > 0) {
-                    $_SESSION['streak_message'] = "Amazing! {$login_streak}-day login streak! 🎉";
-                }
-
-                if ($isAjax) {
-                    echo json_encode(['success' => true, 'message' => 'Login successful']);
-                    exit;
-                } else {
-                    // Redirect to dashboard for form submissions
-                    header('Location: dashboard.php');
-                    exit;
-                }
-            } else {
-                $errors['email'] = 'Invalid email or password';
-            }
-        }
-
-        if ($isAjax) {
-            echo json_encode(['success' => false, 'errors' => $errors]);
-            exit;
-        } else {
-            // For form submissions, redirect back to login with error messages
-            $_SESSION['form_errors'] = $errors;
-            $_SESSION['form_data'] = $_POST;
-            header('Location: login.php');
-            exit;
-        }
-    }
-
     if ($action === 'logout') {
         session_destroy();
 
@@ -370,6 +306,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['form_errors'] = $errors;
             $_SESSION['form_data'] = $_POST;
             header('Location: add-habit.php');
+            exit;
+        }
+    }
+
+    if ($action === 'newsletter_subscribe') {
+        $email = trim($_POST['email'] ?? '');
+
+        // Validate email
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['success' => false, 'error' => 'Please enter a valid email address']);
+            exit;
+        }
+
+        try {
+            // Insert new subscription
+            $stmt = $pdo->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (?)");
+            $result = $stmt->execute([$email]);
+
+            if ($result) {
+                echo json_encode(['success' => true, 'message' => 'You have successfully subscribed to our newsletter!']);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Sorry, we couldn\'t process your subscription. Please try again.']);
+            }
+            exit;
+        } catch (PDOException $e) {
+            // Handle duplicate email error gracefully
+            if ($e->getCode() == 23000) { // SQLSTATE[23000]: Integrity constraint violation
+                echo json_encode(['success' => true, 'message' => 'You are already subscribed to our newsletter!']);
+            } else {
+                error_log("Newsletter subscription error: " . $e->getMessage());
+                echo json_encode(['success' => false, 'error' => 'Sorry, we couldn\'t process your subscription. Please try again.']);
+            }
             exit;
         }
     }

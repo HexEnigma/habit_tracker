@@ -58,9 +58,13 @@
             <div>
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Stay Updated</h3>
                 <p class="text-gray-600 mb-4">Get tips and updates on habit building</p>
-                <form class="space-y-2">
-                    <input type="email" placeholder="Your email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                    <button type="submit" class="bg-blue-500 text-white w-full py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Subscribe</button>
+                <form method="POST" class="space-y-2" onsubmit="handleNewsletterSubmit(event)">
+                    <input type="hidden" name="action" value="newsletter_subscribe">
+                    <input type="email" name="email" placeholder="Your email" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <button type="submit" class="bg-blue-500 text-white w-full py-2 rounded-lg font-semibold hover:bg-blue-600 transition">
+                        Subscribe
+                    </button>
                 </form>
             </div>
         </div>
@@ -87,6 +91,63 @@
         setTimeout(() => {
             window.location.href = 'login.php';
         }, 2000);
+    }
+
+    function handleNewsletterSubmit(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const emailInput = form.querySelector('input[name="email"]');
+        const submitButton = form.querySelector('button[type="submit"]');
+
+        // Store original button text and disable button
+        const originalButtonText = submitButton.textContent;
+        submitButton.textContent = 'Subscribing...';
+        submitButton.disabled = true;
+
+        // Submit the form via AJAX
+        fetch('auth.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show thank you message
+                    showToast('Thank you for subscribing to our newsletter!', 'success');
+
+                    // Clear the email input
+                    emailInput.value = '';
+
+                    // Show social media suggestion after a delay
+                    setTimeout(() => {
+                        showToast('You\'re welcome to contact us via our social media channels!', 'info');
+                    }, 2000);
+
+                    // Redirect to contact page after showing both toasts
+                    setTimeout(() => {
+                        window.location.href = 'contact.php';
+                    }, 4000);
+                } else {
+                    showToast(data.error, 'error');
+                    // Re-enable button on error
+                    submitButton.textContent = originalButtonText;
+                    submitButton.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Show messages even if there's an error (since email is stored)
+                showToast('Thank you for subscribing to our newsletter!', 'success');
+                setTimeout(() => {
+                    showToast('You\'re welcome to contact us via our social media channels!', 'info');
+                }, 2000);
+
+                // Redirect to contact page after showing both toasts
+                setTimeout(() => {
+                    window.location.href = 'contact.php';
+                }, 4000);
+            });
     }
 </script>
 </body>

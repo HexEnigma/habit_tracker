@@ -179,6 +179,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $start_date = $_POST['start_date'];
         $end_date = $_POST['end_date'] ?? null;
         $category = $_POST['category'];
+        $is_public = $_POST['is_public'] ?? 0;
+        $is_visible_to_group = $_POST['is_visible_to_group'] ?? 0; // ADD THIS LINE
 
         // Validate inputs
         $errors = [];
@@ -221,10 +223,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $stmt = $pdo->prepare("
-                    UPDATE habits 
-                    SET name = ?, description = ?, frequency = ?, custom_days = ?, start_date = ?, end_date = ?, category = ?
-                    WHERE id = ? AND user_id = ?
-                ");
+                UPDATE habits 
+                SET 
+                name = ?, 
+                description = ?, 
+                frequency = ?, 
+                custom_days = ?, 
+                start_date = ?, 
+                end_date = ?, 
+                category = ?, 
+                is_public = ?, 
+                is_visible_to_group = ?
+                WHERE 
+                id = ? 
+                AND user_id = ?
+                    ");
+
                 $stmt->execute([
                     $name,
                     $description,
@@ -233,9 +247,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $start_date,
                     $end_date,
                     $category,
+                    $is_public,
+                    $is_visible_to_group,
                     $habit_id,
                     $_SESSION['user_id']
                 ]);
+
 
                 if ($isAjax) {
                     echo json_encode(['success' => true, 'message' => 'Habit updated successfully']);
@@ -279,6 +296,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $start_date = $_POST['start_date'];
         $end_date = $_POST['end_date'] ?? null;
         $category = $_POST['category'] ?? 'health';
+        $is_public = $_POST['is_public'] ?? 0;
+        $is_visible_to_group = $_POST['is_visible_to_group'] ?? 0; // ADD THIS LINE
 
         // Validate inputs
         $errors = [];
@@ -310,9 +329,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $custom_days_value = implode(',', $custom_days);
                 }
 
-                $stmt = $pdo->prepare("INSERT INTO habits (user_id, name, description, frequency, custom_days, start_date, end_date, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                $result = $stmt->execute([$_SESSION['user_id'], $name, $description, $frequency, $custom_days_value, $start_date, $end_date, $category]);
-
+                $stmt = $pdo->prepare("INSERT INTO habits (user_id, name, description, frequency, custom_days, start_date, end_date, category, is_public, is_visible_to_group) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$_SESSION['user_id'], $name, $description, $frequency, $custom_days_value, $start_date, $end_date, $category, $is_public, $is_visible_to_group]);
                 if ($result) {
                     $habit_id = $pdo->lastInsertId();
                     error_log("Habit created successfully, ID: " . $habit_id);

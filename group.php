@@ -181,6 +181,11 @@ require_once 'header.php';
                         <span class="text-gray-800 capitalize"><?php echo $group['role']; ?></span>
                     </div>
                 </div>
+                <?php if ($group['allow_member_visibility']): ?>
+                    <a href="group-members.php?group_id=<?php echo $group_id; ?>" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition inline-block mt-4">
+                        <i class="fas fa-users mr-2"></i> View Members' Habits
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
     </div>

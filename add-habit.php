@@ -111,6 +111,39 @@ require_once 'header.php';
                 </select>
             </div>
 
+            <!-- Privacy Setting -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-eye text-blue-500 mr-2"></i>
+                    Privacy Setting
+                </label>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="radio" name="is_public" value="0" <?php echo ($edit_mode && $editing_habit['is_public'] == 0) ? 'checked' : 'checked'; ?> class="mr-2">
+                        <span>Private (only visible to me)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="is_public" value="1" <?php echo ($edit_mode && $editing_habit['is_public'] == 1) ? 'checked' : ''; ?> class="mr-2">
+                        <span>Public (visible to group members)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Group Visibility Setting -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-users text-blue-500 mr-2"></i>
+                    Group Visibility
+                </label>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="is_visible_to_group" value="1" <?php echo ($edit_mode && $editing_habit['is_visible_to_group'] == 1) ? 'checked' : ''; ?> class="mr-2">
+                        <span>Share with group members</span>
+                    </label>
+                    <p class="text-sm text-gray-500">Group members can see this habit and your progress</p>
+                </div>
+            </div>
+
             <!-- Custom Days (Initially Hidden) -->
             <div id="custom-days-container" class="hidden">
                 <label class="block text-sm font-medium text-gray-700 mb-2">

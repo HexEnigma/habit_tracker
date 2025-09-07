@@ -37,10 +37,10 @@ $stmt = $pdo->prepare("
     SELECT h.*, 
            (SELECT current_streak FROM user_streaks WHERE habit_id = h.id) as current_streak
     FROM habits h 
-    WHERE h.user_id = ? AND (h.is_public = true OR h.user_id = ?)
+    WHERE h.user_id = ? AND (h.is_public = 1 OR h.is_visible_to_group = 1)
     ORDER BY h.created_at DESC
 ");
-$stmt->execute([$viewed_user_id, $current_user_id]);
+$stmt->execute([$viewed_user_id]);
 $habits = $stmt->fetchAll();
 
 require_once 'header.php';

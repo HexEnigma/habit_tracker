@@ -17,14 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim($_POST['name']);
         $description = trim($_POST['description']);
         $is_public = isset($_POST['is_public']) ? 1 : 0;
+        $allow_member_visibility = isset($_POST['allow_member_visibility']) ? 1 : 0;
 
         if (!empty($name)) {
             try {
                 $pdo->beginTransaction();
 
                 // Create group
-                $stmt = $pdo->prepare("INSERT INTO groups (name, description, created_by, is_public) VALUES (?, ?, ?, ?)");
-                $stmt->execute([$name, $description, $user_id, $is_public]);
+                $stmt = $pdo->prepare("INSERT INTO groups (name, description, created_by, is_public, allow_member_visibility) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$name, $description, $user_id, $is_public, $allow_member_visibility]);
                 $group_id = $pdo->lastInsertId();
 
                 // Add creator as admin
@@ -115,6 +116,11 @@ require_once 'header.php';
                 <div class="flex items-center">
                     <input type="checkbox" name="is_public" id="is_public" checked class="mr-2">
                     <label for="is_public" class="text-sm text-gray-700">Public group (anyone can join)</label>
+                </div>
+
+                <div class="flex items-center mt-4">
+                    <input type="checkbox" name="allow_member_visibility" id="allow_member_visibility" checked class="mr-2">
+                    <label for="allow_member_visibility" class="text-sm text-gray-700">Allow group members to view each other's habits and points</label>
                 </div>
 
                 <button type="submit" name="create_group" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-600 transition">

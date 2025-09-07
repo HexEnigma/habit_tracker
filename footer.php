@@ -14,14 +14,17 @@
                     Build better habits, one day at a time. Track your progress and achieve your goals.
                 </p>
                 <div class="flex space-x-4">
-                    <a href="#" class="text-gray-400 hover:text-blue-500 transition">
+                    <a href="https://www.linkedin.com/in/hamim-shahriar" target="_blank" class="text-gray-400 hover:text-blue-500 transition">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a href="https://github.com/HexEnigma" target="_blank" class="text-gray-400 hover:text-blue-500 transition">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="https://www.facebook.com/HamimShahriar4" target="_blank" class="text-gray-400 hover:text-blue-500 transition">
                         <i class="fab fa-facebook text-lg"></i>
                     </a>
                     <a href="#" class="text-gray-400 hover:text-blue-500 transition">
                         <i class="fab fa-twitter text-lg"></i>
-                    </a>
-                    <a href="#" class="text-gray-400 hover:text-blue-500 transition">
-                        <i class="fab fa-instagram text-lg"></i>
                     </a>
                 </div>
             </div>

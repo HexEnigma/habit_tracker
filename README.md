@@ -1,12 +1,12 @@
 # HabitTracker - Build Better Habits, One Day at a Time
 
-![HabitTracker Logo](screenshots/logo.png) _← Add your logo here later_
+![HabitTracker Logo](screenshots/logo.png)
 
 A comprehensive, feature-rich habit tracking web application designed to help users build consistency, track progress, and achieve their personal goals through gamification and social accountability.
 
 ## 🚀 Live Demo
 
-_[Live Demo Link](#) ← Add your live URL here when deployed_
+_[Live Demo Link](#) ← Live URL coming soon...
 
 ## 📸 Screenshots
 
@@ -18,7 +18,7 @@ _[Live Demo Link](#) ← Add your live URL here when deployed_
 | --------------------------------- | --------------------------------------------- | -------------------------------------- |
 | ![Groups](screenshots/groups.png) | ![Achievements](screenshots/achievements.png) | ![Mobile](screenshots/mobile-view.png) |
 
-_← Add your screenshots in a folder named `screenshots/` in your repository root_
+
 
 ## ✨ Features
 
@@ -173,6 +173,7 @@ habit_tracker/
 ├── 📄 monthly-view.php       # Calendar functionality
 ├── 📄 header.php             # Site header
 ├── 📄 footer.php             # Site footer
+├── 📄 All the remainig file in the repository.
 ├── 📁 css/                   # Stylesheets
 │   ├── style.css
 │   └── login-style.css
